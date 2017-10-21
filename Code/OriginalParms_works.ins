@@ -1,0 +1,222 @@
+
+!//////////////////////////////////////////////////////
+! FILE CONTAINS ORIGINAL VALUES FOR ALL PARAMETERS
+!/////////////////////////////////////////////////////
+! Forcing data & gridlists
+!
+! CO2
+	param "file_co2" (str "Data/co2_C2E.txt")
+
+! Gridlist
+param "file_gridlist" (str "Data/C2E_grid.txt") 
+		
+! Climate data
+	
+	!Historic (observations)
+	param "file_temp" (str "Data/temp.txt")
+	param "file_prec" (str "Data/ppt.txt")
+	param "file_sun" (str "Data/srad.txt")
+	param "file_wetd" (str "Data/wetd.txt")
+
+! Soil data
+!param "file_soil" (str "Data/soil_code.txt")
+
+! Soil data
+    param "file_clay" (str "/Users/poulterlab1/Documents/LPJGUESS/drivers_1km/gcs84_conus_CLAY.nc4")
+    param "file_sand" (str "/Users/poulterlab1/Documents/LPJGUESS/drivers_1km/gcs84_conus_SAND.nc4")
+    param "file_silt" (str "/Users/poulterlab1/Documents/LPJGUESS/drivers_1km/gcs84_conus_SILT.nc")
+	
+!///////////////////////////////////////////////////                      
+!         
+outputdirectory "Output/orig2_"
+!                      
+file_cmass "cmass.out"
+file_anpp "anpp.out"
+file_lai "lai.out"  
+file_cflux "cflux.out"
+file_runoff "tot_runoff.out"
+file_cpool "cpool.out"
+file_firert "firert.out"
+file_fpc "fpc.out"
+!                      
+! Monthly outputs                     
+file_mnpp "mnpp.out"
+file_mlai "mlai.out"
+file_mrh "mrh.out"
+file_mgpp "mgpp.out"
+file_mra "mra.out"
+file_mnee "mnee.out"
+file_maet "maet.out"
+file_mpet "mpet.out"
+file_mevap "mevap.out"
+file_mintercep "mintercep.out"
+file_mrunoff "mrunoff.out"
+file_mwcont_upper "mwcont_upper.out"
+file_mwcont_lower "mwcont_lower.out"
+
+! Annual output
+	param "file_cohort_annual" (str "./cohort_annual.nc")
+	param "file_pft_annual" (str "./pft_annual.nc")
+	param "file_stand_annual" (str "./stand_annual.nc")
+!
+! Monthly output
+	param "file_pft_monthly" (str "./pft_monthly.nc")
+	param "file_stand_monthly" (str "./stand_monthly.nc")
+	param "file_static" (str "./static_out.nc")
+! Daily output
+	param "file_stand_daily" (str "./stand_daily.nc")
+!
+!///////////////////////////////////////////////////             
+!///////////////////////////////////////////////////
+!  RUN PARAMETERS AND OPTIONS
+!                      
+param "annual_output" (num 1)
+title "LPJ-GUESS (guess2008) cohort mode"
+vegmode "cohort"
+nyear 1153 !1153 to run through 2012
+ifdailynpp 1
+ifdailydecomp 1 !KE 8.19.14 changed to daily 1 from monthly 0
+ifcalcsla 0
+iffire 1 !fire on 0 fire off 1
+ifdisturb 0
+npatch 100
+patcharea 1000
+estinterval 1
+distinterval 3
+ifhistdisturb 0		
+ifbgestab 1
+ifsme 1
+ifstochestab 1
+ifstochmort 1
+ifcdebt 1
+ifmanaged 0         ! whether to allow  land management masking (1) or not (0) 
+ifsmoothgreffmort 1
+ifdroughtlimitedestab 0 !KE turned off (0)
+ifrainonwetdaysonly 1
+ifspeciesspecificwateruptake 1
+instype "NETSWRAD"
+soildata "STATSGO" !"TEXTFILE" !"HWSD1KM" ! KMR added flag. Specify "statsgo", "HWSD", or "textfile"
+climdat "DAYMET" ! KMR added flag. Specify "DAYMET" or "CRU"
+
+
+!startHisClim 1120 	! simulation year to start using historical climate data
+					! spin-up uses detrended climate data
+!startHisDisturb 1120		! simulation year to start using historical disturbance data
+					! spin-up uses fire (if iffire enabled) and patch-leve disturbance (if ifdisturb enabled)
+
+outtype "TEXT" 	! file type for output. Options are "NETCDF" or "TEXT"
+
+lonDis 0.00833333333333333333 ! resolution of grid cell in decimal degrees
+latDis 0.00833333333333333333 ! resolution of grid cell in decimal degrees
+
+saoutputyr 	0	! simulation year that variables begin to be output for stand annual 
+pftaoutputyr 0		! simulation year that variables begin to be output for PFT annual
+cohortaoutputyr 0	! simulation year that variables begin to be output for cohort annual
+					! recommend setting to last simulation year (nyear-1)
+moutputyr 1150		! simulation year that variables begin to be output for monthly 
+doutputyr 1150       ! simulation year that variables begin to be output for daily 
+
+ifannualout 0		! whether annual output (1=yes)
+ifmonthlyout 1		! whether monthly output (1=yes)
+ifdailyout 1		! whether daily output (1=yes)
+ifpftannualout 1	! whether pft annual output (1=yes)
+ifpftmonthlyout 1	! whether pft monthly output (1=yes)
+ifcohortout 1		! whether cohort output (1=yes)
+ifstaticout 0		! whether static output (1=yes) example variable whc
+					! this requires elevation and slope data in your gridlist
+
+!///////////////////////////////////////////////////
+!      !///////////////////////////////////////////////////////////////////////////////////////
+!// PARAMETERS FOR PFTS - GLOBAL PFTS
+!// Run GUESS with -help option for list of keywords and their meanings
+
+group "common" (
+
+	! Parameters common to all PFTs
+
+	lambda_max 0.8 !non-water-stressed ratio of intercellular to ambient CO2 partial pressure
+	emax 5 !maximum evapotranspiration rate (mm/day)
+	drought_tolerance 0.0001 ! .0001 makes no difference if species-specific water uptake rate not enabled	
+	ifsage 0 ! KMR added
+
+)
+
+group "grass" (
+
+	! Parameters common to all grasses
+
+	common
+	lifeform "grass"
+	gmin 0.5 !canopy conductance component not associated with photosynthesis (mm/s)
+	phenology "any"		
+	tcmin_surv -100
+	tcmin_est -100
+	tcmax_est 1000  !no limit
+	twmin_est -1000 !no limit
+	gdd5min_est 0   !no limit
+	leaflong 1				
+	turnover_leaf 1	
+	cton_leaf 29
+	cton_root 29
+	litterme 0.9 !litter moisture flammability threshold (fraction of AWC)
+	intc 0.01 !interception coefficient (unitless)- no basis for modification
+	aphenmax 365 ! default for grass, equivalent to not using parameter
+	downramp 1 ! default, equivalent to not using parameter
+
+)
+
+pft "ANGE" (
+
+	! Andropogon gerardii
+
+	include 1
+	grass
+	pathway "c4"
+	respcoeff 0.15
+	pstemp_min 6
+	pstemp_low 20
+	pstemp_high 45
+	pstemp_max 55
+	parff_min 1000000
+	phengdd5ramp 100
+	reprfrac .107 !fraction of NPP allocated to reproduction
+	
+	! The following are modified:
+	fireresist 0.001
+	ltor_max .5 !.91 !0.5
+	wscal_min 0.35 !35 standard, ANGE better
+	
+	! PFT-specific
+	rootdist 0.93 0.07
+	sla 19.62
+	turnover_root 0.5
+	
+)
+
+pft "PAVI" (
+
+	! Panicum virgatum
+
+	include 1
+	grass
+	pathway "c4"
+	respcoeff 0.15
+	pstemp_min 6
+	pstemp_low 20
+	pstemp_high 45
+	pstemp_max 55
+	parff_min 1000000
+	phengdd5ramp 100
+	reprfrac .286 !fraction of NPP allocated to reproduction. orig value = .1
+	
+	! The following are modified:
+	fireresist 0.001
+	ltor_max .5 !1.4 !0.5
+	wscal_min 0.35 !35 standard, PAVI worse. only matters if raingreen pheno
+	
+	!PFT-specific
+	rootdist 0.99 0.01 
+	sla 22.9
+	turnover_root 0.31
+	
+)

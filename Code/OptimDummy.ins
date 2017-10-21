@@ -1,0 +1,185 @@
+
+!//////////////////////////////////////////////////////
+! FILE CONTAINS ORIGINAL VALUES + VALUES FROM DATA
+!/////////////////////////////////////////////////////
+! Forcing data & gridlists
+!
+! CO2
+	param "file_co2" (str "Data/co2_C2E.txt")
+
+! Gridlist
+	param "file_gridlist" (str "Data/C2E_grid.txt") 
+		
+! Climate data
+	!Historic (observations)
+	param "file_temp" (str "Data/temp.txt")
+	param "file_prec" (str "Data/ppt.txt")
+	param "file_sun" (str "Data/srad.txt")
+	param "file_wetd" (str "Data/wetd.txt")
+
+! Soil data
+    param "file_clay" (str "Data/gcs84_conus_CLAY.nc4")
+    param "file_sand" (str "Data/gcs84_conus_SAND.nc4")
+    param "file_silt" (str "Data/gcs84_conus_SILT.nc")
+	
+!///////////////////////////////////////////////////                      
+!         
+outputdirectory "./"
+!                      
+file_cmass "cmass_randomval.txt"
+file_anpp "anpp_randomval.txt"
+file_cflux "cflux_randomval.txt"
+file_cpool "cpool_randomval.txt"
+file_fpc "fpc_randomval.txt"
+!                      
+! Monthly outputs                     
+file_mwcont_upper "mwcont_upper_randomval.txt"
+!
+!///////////////////////////////////////////////////             
+!///////////////////////////////////////////////////
+!  RUN PARAMETERS AND OPTIONS
+!                      
+param "annual_output" (num 1)
+title "LPJ-GUESS (guess2008) cohort mode"
+vegmode "cohort"
+nyear 1153 !1153 to run through 2012
+ifdailynpp 1
+ifdailydecomp 1 !KE 8.19.14 changed to daily 1 from monthly 0
+ifcalcsla 0
+iffire 1 !fire on 0 fire off 1
+ifdisturb 0 ! DO NOT TURN ON! Kills outright, bad effect on output.
+npatch 100
+patcharea 1
+estinterval 5
+distinterval 3
+ifhistdisturb 0		
+ifbgestab 0
+ifsme 0
+ifstochestab 0
+ifstochmort 0
+ifcdebt 0
+ifmanaged 0         ! whether to allow  land management masking (1) or not (0) 
+ifsmoothgreffmort 0
+ifdroughtlimitedestab 0 !KE turned off (0)
+ifrainonwetdaysonly 1
+ifspeciesspecificwateruptake 1
+instype "NETSWRAD"
+soildata "STATSGO" !"TEXTFILE" !"HWSD1KM" ! KMR added flag. Specify "statsgo", "HWSD", or "textfile"
+climdat "DAYMET" ! KMR added flag. Specify "DAYMET" or "CRU"
+
+
+!startHisClim 1120 	! simulation year to start using historical climate data
+					! spin-up uses detrended climate data
+!startHisDisturb 1120		! simulation year to start using historical disturbance data
+					! spin-up uses fire (if iffire enabled) and patch-leve disturbance (if ifdisturb enabled)
+
+outtype "TEXT" 	! file type for output. Options are "NETCDF" or "TEXT"
+
+lonDis 0.00833333333333333333 ! resolution of grid cell in decimal degrees
+latDis 0.00833333333333333333 ! resolution of grid cell in decimal degrees
+
+saoutputyr 	0	! simulation year that variables begin to be output for stand annual 
+pftaoutputyr 0		! simulation year that variables begin to be output for PFT annual
+cohortaoutputyr 0	! simulation year that variables begin to be output for cohort annual
+					! recommend setting to last simulation year (nyear-1)
+moutputyr 1150		! simulation year that variables begin to be output for monthly 
+doutputyr 1150       ! simulation year that variables begin to be output for daily 
+
+ifannualout 0		! whether annual output (1=yes)
+ifmonthlyout 1		! whether monthly output (1=yes)
+ifdailyout 1		! whether daily output (1=yes)
+ifpftannualout 1	! whether pft annual output (1=yes)
+ifpftmonthlyout 1	! whether pft monthly output (1=yes)
+ifcohortout 1		! whether cohort output (1=yes)
+ifstaticout 0		! whether static output (1=yes) example variable whc
+					! this requires elevation and slope data in your gridlist
+
+!///////////////////////////////////////////////////
+!      !///////////////////////////////////////////////////////////////////////////////////////
+!// PARAMETERS FOR PFTS - GLOBAL PFTS
+!// Run GUESS with -help option for list of keywords and their meanings
+
+group "common" (
+
+	! Parameters common to all PFTs
+
+	lambda_max 0.8 !non-water-stressed ratio of intercellular to ambient CO2 partial pressure
+	emax 5 !maximum evapotranspiration rate (mm/day)
+	ifsage 0 ! KMR added
+
+)
+
+group "grass" (
+
+	! Parameters common to all grasses (standard values)
+	common
+	lifeform "grass"
+	phenology "any"		pathway "c4"
+	pstemp_min 6
+	pstemp_low 20
+	pstemp_high 45
+	pstemp_max 50	
+	tcmin_surv -100
+	tcmin_est -100
+	tcmax_est 1000  !no limit
+	twmin_est -1000 !no limit
+	gdd5min_est 0   !no limit
+	leaflong 1
+	turnover_leaf 1	
+	gmin 0.5 !canopy conductance component not associated with photosynthesis (mm/s)
+	cton_leaf 29
+	cton_root 29
+	intc 0.01 !interception coefficient (unitless)- no basis for modification
+	downramp 1 ! default, equivalent to not using parameter
+	phengdd5ramp 100 
+	respcoeff 0.15 !maintenance respiration coefficient (0-1) 
+		
+	! The following parameter values are modified for both species:
+	fireresist 0.001
+	litterme 0.99 !litter moisture flammability threshold (fraction of AWC)
+
+)
+
+pft "ANGE" (
+
+	! Andropogon gerardii
+
+	include 1
+	grass
+
+	! PFT-specific (from data)--------------------
+	rootdist 0.93 0.07
+	sla 19.62
+	turnover_root 0.5
+	reprfrac .107 !fraction of NPP allocated to reproduction
+	
+	!PFT-specific (to be optimized)-----------------
+	drought_tolerance drought_tolval1
+	aphenmax aphenmaxval1
+	ltor_max ltormaxval1
+	wscal_min wscalminval1 
+	parff_min parff_minval1
+
+	
+)
+
+pft "PAVI" (
+
+	! Panicum virgatum
+
+	include 1
+	grass
+	
+	!PFT-specific (from data)----------
+	rootdist 0.99 0.01 
+	sla 22.9
+	turnover_root 0.31
+	reprfrac .286 !fraction of NPP allocated to reproduction. orig value = .1
+	
+	!PFT-specific (to be optimized)-------------
+	drought_tolerance drought_tolval2
+	aphenmax aphenmaxval2
+	ltor_max ltormaxval2
+	wscal_min wscalminval2
+	parff_min parff_minval2
+)
