@@ -73,8 +73,8 @@ nyear 1153 !1153 to run through 2012
 ifdailynpp 1
 ifdailydecomp 1 !KE 8.19.14 changed to daily 1 from monthly 0
 ifcalcsla 0
-iffire 0 !fire on 0 fire off 1
-ifdisturb 1 ! DO NOT TURN ON! Kills outright, bad effect on output.
+iffire 1 !fire on 0 fire off 1
+ifdisturb 0 ! DO NOT TURN ON! Kills outright, bad effect on output.
 npatch 100
 patcharea 1
 estinterval 5
@@ -109,8 +109,8 @@ saoutputyr 	0	! simulation year that variables begin to be output for stand annu
 pftaoutputyr 0		! simulation year that variables begin to be output for PFT annual
 cohortaoutputyr 0	! simulation year that variables begin to be output for cohort annual
 					! recommend setting to last simulation year (nyear-1)
-moutputyr 1150		! simulation year that variables begin to be output for monthly 
-doutputyr 1150       ! simulation year that variables begin to be output for daily 
+moutputyr 0	! simulation year that variables begin to be output for monthly 
+doutputyr 0       ! simulation year that variables begin to be output for daily 
 
 ifannualout 0		! whether annual output (1=yes)
 ifmonthlyout 1		! whether monthly output (1=yes)
@@ -141,7 +141,8 @@ group "grass" (
 	! Parameters common to all grasses (standard values)
 	common
 	lifeform "grass"
-	phenology "any"		pathway "c4"
+	phenology "any"		
+	pathway "c4"
 	pstemp_min 6
 	pstemp_low 20
 	pstemp_high 45
@@ -159,7 +160,7 @@ group "grass" (
 	intc 0.01 !interception coefficient (unitless)- no basis for modification
 	downramp 1 ! default, equivalent to not using parameter
 	phengdd5ramp 100 
-	respcoeff 0.15 !maintenance respiration coefficient (0-1) 
+	respcoeff 0.15 !maintenance respiration coefficient (0-1). c3 is 1
 		
 	! The following parameter values are modified for both species:
 	fireresist 0.001
@@ -181,10 +182,10 @@ pft "ANGE" (
 	reprfrac .107 !fraction of NPP allocated to reproduction
 	
 	!PFT-specific (to be optimized)-----------------
-	drought_tolerance 0.0001
-	aphenmax 365 
-	ltor_max .5 
-	wscal_min .3 !0.35 !35 standard, ANGE better
+	drought_tolerance .0001 !0.0001
+	aphenmax 210 !365 
+	ltor_max .5
+	wscal_min .35 !.5 !.35 !0.35 !35 standard, ANGE better
 	parff_min 1000000
 
 	
@@ -204,9 +205,9 @@ pft "PAVI" (
 	reprfrac .286 !fraction of NPP allocated to reproduction. orig value = .1
 	
 	!PFT-specific (to be optimized)-------------
-	drought_tolerance 0.0001
-	aphenmax 365
+	drought_tolerance .0001 !0.0001 ! should always be <=.5, per internal note
+	aphenmax 210 !365
 	ltor_max .5
-	wscal_min .4 !0.35 !35 standard, PAVI worse. only matters if raingreen pheno	
+	wscal_min .35 !.6 !.35 !0.35 !35 standard, PAVI worse. only matters if raingreen pheno	
 	parff_min 1000000
 )

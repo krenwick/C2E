@@ -18,9 +18,9 @@
 	param "file_wetd" (str "Data/wetd.txt")
 
 ! Soil data
-    param "file_clay" (str "Data/gcs84_conus_CLAY.nc4")
-    param "file_sand" (str "Data/gcs84_conus_SAND.nc4")
-    param "file_silt" (str "Data/gcs84_conus_SILT.nc")
+    param "file_clay" (str "Data/C2E_clay.nc4")
+    param "file_sand" (str "Data/C2E_sand.nc4")
+    param "file_silt" (str "Data/C2E_silt.nc")
 	
 !///////////////////////////////////////////////////                      
 !         
@@ -48,7 +48,7 @@ ifdailydecomp 1 !KE 8.19.14 changed to daily 1 from monthly 0
 ifcalcsla 0
 iffire 1 !fire on 0 fire off 1
 ifdisturb 0 ! DO NOT TURN ON! Kills outright, bad effect on output.
-npatch 100
+npatch 10
 patcharea 1
 estinterval 5
 distinterval 3
@@ -114,7 +114,8 @@ group "grass" (
 	! Parameters common to all grasses (standard values)
 	common
 	lifeform "grass"
-	phenology "any"		pathway "c4"
+	phenology "any"		
+	pathway "c4"
 	pstemp_min 6
 	pstemp_low 20
 	pstemp_high 45

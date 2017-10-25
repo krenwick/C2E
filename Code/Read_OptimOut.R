@@ -1,0 +1,204 @@
+################################################################################
+# Examine output from hyalite optimization runs
+# NOTE: make sure model on git is MASTER and compiled with old phenology!
+# New phenology model is in LPJfiles
+################################################################################
+rm(list=ls())
+library(DEoptim)
+library(tidyverse); theme_set(theme_bw(base_size=10))
+library(data.table)
+library(zoo)
+library(grid)
+library(gridExtra)
+
+# SET WORKING DIRECTORY:
+setwd("~/Documents/C2E/")
+outname1 <- "OptimRun"
+outname2 <- "OptimRun_Irr"
+object1 <- "OptimOut.RData"
+
+#-------------------------------------------------------------------------------
+# Get object from DEparoptim_summergreen1:
+
+load(object1)
+summary(DE1)
+DE1$optim
+########################
+# Make new ins file with these parameter values:
+insfile <- "Code/OptimDummy.ins" # name of ins file to use
+# gsub: replaces all occurences of a pattern
+ins  <- readLines(insfile)
+tx  <- gsub(pattern = "drought_tolval1", replace = DE1$optim$bestmem[1], x = ins)
+tx  <- gsub(pattern = "drought_tolval2", replace = DE1$optim$bestmem[2], x = tx)
+tx  <- gsub(pattern = "aphenmaxval1", replace = DE1$optim$bestmem[3], x = tx)
+tx  <- gsub(pattern = "aphenmaxval2", replace = DE1$optim$bestmem[4], x = tx)
+tx  <- gsub(pattern = "ltormaxval1", replace = DE1$optim$bestmem[5], x = tx)
+tx  <- gsub(pattern = "ltormaxval2", replace = DE1$optim$bestmem[6], x = tx)
+tx  <- gsub(pattern = "wscalminval1", replace = DE1$optim$bestmem[7], x = tx)
+tx  <- gsub(pattern = "wscalminval2", replace = DE1$optim$bestmem[8], x = tx)
+tx  <- gsub(pattern = "parff_minval1", replace = DE1$optim$bestmem[9], x = tx)
+tx  <- gsub(pattern = "parff_minval2", replace = DE1$optim$bestmem[10], x = tx)
+tx  <- gsub(pattern = "npatch 10", replace = "npatch 100", x = tx)
+insname <- "OptimParms"
+tx  <- gsub(pattern = "randomval", replace = outname1, x = tx)
+tx  <- gsub(pattern = "\\./", replace = "Output/", x = tx)
+writeLines(tx, con=paste("Code/",insname,".ins", sep=""))
+
+# Run model with new ins then compare output to flux data:
+# CHECK: is correct model compiled???
+system("/Users/poulterlab1/version-control/LPJ-GUESS/ModelFiles/modules/./guess /Users/poulterlab1/Documents/C2E/Code/OptimParms.ins")
+
+################################################################################
+# Re-run model using irrigation driver data
+# Make new ins file with these parameter values:
+insfile2 <- "Code/OptimParms.ins" # name of ins file to use
+# gsub: replaces all occurences of a pattern
+ins  <- readLines(insfile2)
+insname <- "OptimParms_Irr"
+tx  <- gsub(pattern = "ppt.txt", replace = "ppt_irr.txt", x = tx)
+tx  <- gsub(pattern = "wetd.txt", replace = "wetd_irr.txt", x = tx)
+tx  <- gsub(pattern = outname1, replace = outname2, x = tx)
+writeLines(tx, con=paste("Code/",insname,".ins", sep=""))
+
+# Run model with new ins then compare output to flux data:
+# CHECK: is correct model compiled???
+system("/Users/poulterlab1/version-control/LPJ-GUESS/ModelFiles/modules/./guess /Users/poulterlab1/Documents/C2E/Code/OptimParms_Irr.ins")
+
+################################################################################
+# PLOT TIME!
+################################################################################
+# Read in reference data from Konza:
+k <- read.csv("Data/RefData/anpp_1991_2012.csv")
+
+# Model output: ambient
+npp <- read.table("Output/anpp_OptimRun.txt", header=T) %>%
+  mutate(Source="Model", Treatment="control") %>%
+  mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
+  mutate(year=Year+860) %>%
+  filter(year>=1991) %>%
+  select(year,Source,Treatment,Total) %>%
+  mutate(Total=Total*0.4761905) %>% # so just above-ground
+  rename(NPP=Total)
+
+# Model output: irrigation
+npp2 <- read.table("Output/anpp_OptimRun_Irr.txt", header=T) %>%
+  mutate(Source="Model", Treatment="irrigated") %>%
+  mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
+  mutate(year=Year+860) %>%
+  filter(year>=1991) %>%
+  select(year,Source,Treatment,Total) %>%
+  mutate(Tot=ifelse(year<=(1990), Total*0.4761905, NA)) %>%
+  mutate(Tot=ifelse(year>1990 & year<2000, Total*0.5235602, Tot)) %>%
+  mutate(Tot=ifelse(year>=2000, Total*0.5494505, Tot)) %>%
+  select(-Total) %>%
+  rename(NPP=Tot)
+
+knpp <- k %>% rename(Treatment=treatment, NPP=anpp_gm2) %>%
+  mutate(Source="Field") %>%
+  select(year,Source,Treatment,NPP)
+
+npp1 <- rbind(npp,npp2,knpp) %>%
+  rename(Year=year)
+
+mod <- filter(npp1, Source=="Model")
+field <- filter(npp1, Source=="Field")
+ggplot(data=field, aes(x=Year, y=NPP)) +
+  geom_bar(stat="identity", fill="lightgray", color="black") +
+  geom_point(data=mod, color="chartreuse4", size=2) +
+  ylab(expression(ANPP~(g~m^{-2}))) +
+  xlab("Year") +
+  facet_wrap(~Treatment)
+
+################################################################################
+# Plot annual FPC by species
+################################################################################
+fpc1 <- read.table("Output/fpc_OptimRun.txt", header=T) %>%
+  mutate(Treatment="Ambient")
+fpc3 <- read.table("Output/fpc_OptimRun_Irr.txt", header=T) %>%
+  mutate(Treatment="Irrigation")
+
+fpc <- rbind.data.frame(fpc1,fpc3) %>%
+  mutate(Year=Year+860) %>%
+  filter(Year>=1980) %>%
+  gather(Species, FPC, ANGE:PAVI)
+
+# (tried full time series- converges early)
+ggplot(data=fpc, aes(x=Year,y=FPC, color=Species)) +
+  geom_line() + 
+  geom_point() +
+  facet_wrap(~Treatment)
+
+################################################################################
+# Plot annual NPP by species- same pattern as FPC?
+################################################################################
+# Model output: ambient
+npp <- read.table("Output/anpp_OptimRun.txt", header=T) %>%
+  mutate(Source="Model", Treatment="control") %>%
+  mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
+  mutate(Year=Year+860) %>%
+  filter(Year>=1991) %>%
+  mutate_at(vars(ANGE:Total), funs(.*0.4761905)) %>%
+  select(Year,Source,Treatment,ANGE:PAVI) %>%
+  gather(Species, ANPP, ANGE:PAVI)
+
+# Model output: irrigation
+npp2 <- read.table("Output/anpp_OptimRun_Irr.txt", header=T) %>%
+  mutate(Source="Model", Treatment="irrigated") %>%
+  mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
+  mutate(Year=Year+860) %>%
+  filter(Year>=1991) %>%
+  mutate_at(vars(ANGE:Total), funs(ifelse(Year<=1990, .*0.4761905, 
+                                          ifelse(Year>1990 & Year<2000, .*0.5235602,
+                                                 .*0.5494505)))) %>%
+  select(Year,Source,Treatment,ANGE:PAVI) %>%
+  gather(Species, ANPP, ANGE:PAVI)
+
+
+npp3 <- rbind(npp,npp2) 
+
+ggplot(data=npp3, aes(x=Year, y=ANPP, color=Species)) +
+  geom_point() +
+  geom_line() +
+  ylab(expression(ANPP~(g~m^{-2}))) +
+  facet_wrap(~Treatment)
+
+#####################################################
+# Plot ambiet and model as a function of precip
+#####################################################
+amb <- read.table("Data/ppt.txt", header=F)
+irr <- read.table("Data/ppt_irr.txt")
+head(amb)
+names(amb) <- c("Lat","Lon","Year",seq_along(month.abb))
+amb2 <- amb %>% mutate(yr=seq(1:nrow(amb))) %>%
+  mutate(Year=yr+859) %>%
+  gather(Month,Ambient,`1`:`12`)
+names(irr) <- c("Lat","Lon","Year",seq_along(month.abb))
+irr2 <- irr %>% mutate(yr=seq(1:nrow(irr))) %>%
+  mutate(Year=yr+859) %>%
+  gather(Month,Irrigated,`1`:`12`)
+ppt <- merge(amb2,irr2,by=c("Lat","Lon","Year","Month")) %>%
+  filter(Year>1990) %>%
+  group_by(Year) %>%
+  summarise_at(vars(Ambient,Irrigated), mean)
+
+ppt2 <- merge(ppt,npp1, by="Year")
+ggplot(data=ppt2, aes(x=Ambient, y=NPP, color=Source, fill=Source)) +
+  geom_point() +
+  geom_smooth(method="lm")
+
+# Read in model output (monthly) ------------------------------------
+# Pull in monthly data from orig1
+orig1 <- NULL 
+vars=c("mgpp","mrh","mra","mnee","mevap","maet","mlai","mwcont_upper")
+for(var in vars) {
+  data=paste("/orig1_",var,".out", sep="")
+  b <- fread(data, header=T)
+  b1 <- b %>% mutate(Year=Year+860) %>% 
+    filter(Year>=1991) %>%
+    gather(Month,orig1, Jan:Dec) %>%
+    mutate(Variable=var) %>%
+    select(Year, Month,Variable,orig1)
+  orig1 <- rbind.data.frame(orig1,b1)
+}
+orig1$D <- as.yearmon(paste(orig1$Year, orig1$Month), "%Y %b")
+orig1$Date <- as.Date(orig1$D)
