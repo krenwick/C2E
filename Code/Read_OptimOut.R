@@ -162,29 +162,6 @@ ggplot(data=npp3, aes(x=Year, y=ANPP, color=Species)) +
   ylab(expression(ANPP~(g~m^{-2}))) +
   facet_wrap(~Treatment)
 
-#####################################################
-# Plot ambiet and model as a function of precip
-#####################################################
-amb <- read.table("Data/ppt.txt", header=F)
-irr <- read.table("Data/ppt_irr.txt")
-head(amb)
-names(amb) <- c("Lat","Lon","Year",seq_along(month.abb))
-amb2 <- amb %>% mutate(yr=seq(1:nrow(amb))) %>%
-  mutate(Year=yr+859) %>%
-  gather(Month,Ambient,`1`:`12`)
-names(irr) <- c("Lat","Lon","Year",seq_along(month.abb))
-irr2 <- irr %>% mutate(yr=seq(1:nrow(irr))) %>%
-  mutate(Year=yr+859) %>%
-  gather(Month,Irrigated,`1`:`12`)
-ppt <- merge(amb2,irr2,by=c("Lat","Lon","Year","Month")) %>%
-  filter(Year>1990) %>%
-  group_by(Year) %>%
-  summarise_at(vars(Ambient,Irrigated), mean)
-
-ppt2 <- merge(ppt,npp1, by="Year")
-ggplot(data=ppt2, aes(x=Ambient, y=NPP, color=Source, fill=Source)) +
-  geom_point() +
-  geom_smooth(method="lm")
 
 # Read in model output (monthly) ------------------------------------
 # Pull in monthly data from orig1

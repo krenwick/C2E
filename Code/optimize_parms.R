@@ -68,7 +68,7 @@ LPJG <- function(par) {
   cov1 <- fread(paste("fpc_",random,".txt",sep=""), header=T) %>%
     	dplyr::filter(Year>=1133) %>%
       summarise_at(vars(ANGE:PAVI), funs(mean)) %>%
-      dplyr::mutate(resid=(abs(ANGE-.6)+abs(PAVI-.4))*10)
+      dplyr::mutate(resid=(abs(ANGE-.6)+abs(PAVI-.4))*3)
   #SSR <- resid %>% dplyr::summarise(SSR=sum(resid2))
   #print(round(SSR,2))
   #return (as.numeric(SSR+lc2*.756)) # weight so annual LAI+FPC=all monthly GPP
