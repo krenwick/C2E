@@ -44,9 +44,11 @@ format_guess <- function(data, nyear, ...){ # use dots since passing text to dpl
   d1 <- data %>% select(lon, lat, year, month, ...) %>%
     spread(month, ...)
   # Round up then chop off first few rows to get right #
-  d2 <- do.call(rbind, replicate(ceiling(nyear/nrow(d1)), d1, simplify=FALSE))
-  s <- (nrow(d2) - nyear)
-  return(d2[(s+1):nrow(d2),])
+  d2 <- sample(d1[],nyear-nrow(d1), replace=T)
+  s <- sample(c(1:nrow(d1)),1)
+  d2 <-  d1[sample(c(1:nrow(d1)),(nyear-nrow(d1)), replace=T),]
+  d3 <- rbind(d2,d1)
+  return(d3)
 }
 
 # I have 22 years of site-specific climate data (1991-2012)
