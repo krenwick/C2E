@@ -15,7 +15,7 @@ library(gridExtra)
 setwd("~/Documents/C2E/")
 outname1 <- "OptimRun"
 outname2 <- "OptimRun_Irr"
-object1 <- "OptimOut.RData"
+object1 <- "OptimOut1.RData"
 
 #-------------------------------------------------------------------------------
 # Get object from DEparoptim_summergreen1:
@@ -23,6 +23,8 @@ object1 <- "OptimOut.RData"
 load(object1)
 summary(DE1)
 DE1$optim
+LPJG
+ins
 ########################
 # Make new ins file with these parameter values:
 insfile <- "Code/OptimDummy.ins" # name of ins file to use
@@ -71,7 +73,7 @@ system("/Users/poulterlab1/version-control/LPJ-GUESS/ModelFiles/modules/./guess 
 k <- read.csv("Data/RefData/anpp_1991_2012.csv")
 
 # Model output: ambient
-npp <- read.table("Output/anpp_OptimRun.txt", header=T) %>%
+npp <- read.table("Output/OptimOut1_run/anpp_OptimRun.txt", header=T) %>%
   mutate(Source="Model", Treatment="control") %>%
   mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
   mutate(year=Year+860) %>%
@@ -81,7 +83,7 @@ npp <- read.table("Output/anpp_OptimRun.txt", header=T) %>%
   rename(NPP=Total)
 
 # Model output: irrigation
-npp2 <- read.table("Output/anpp_OptimRun_Irr.txt", header=T) %>%
+npp2 <- read.table("Output/OptimOut1_run/anpp_OptimRun_Irr.txt", header=T) %>%
   mutate(Source="Model", Treatment="irrigated") %>%
   mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
   mutate(year=Year+860) %>%
@@ -109,12 +111,29 @@ ggplot(data=field, aes(x=Year, y=NPP)) +
   xlab("Year") +
   facet_wrap(~Treatment)
 
+# what is the R2?
+r <- spread(npp1, Source, NPP) 
+rc<- filter(r, Treatment=="control")
+ri<- filter(r, Treatment=="irrigated")
+summary(lm(data=rc, Field~Model)) # .03, not significant
+summary(lm(data=ri, Field~Model)) # .36
+
+# What is the mean abosolute error?
+r %>% mutate(diff=abs(Field-Model)) %>%
+  group_by(Treatment) %>%
+  summarize(mean(diff))
+#contro: 87
+#irrigated: 203
+#OptimOut0: 76/192, .16/.09, uses cover
+#OptimOut: 87/203, .03/.36 uses cover
+#OptimOut1: 65/147, .32/.19, just NPP
+#OptimOut2:
 ################################################################################
 # Plot annual FPC by species
 ################################################################################
-fpc1 <- read.table("Output/fpc_OptimRun.txt", header=T) %>%
+fpc1 <- read.table("Output/OptimOut0_run/fpc_OptimRun.txt", header=T) %>%
   mutate(Treatment="Ambient")
-fpc3 <- read.table("Output/fpc_OptimRun_Irr.txt", header=T) %>%
+fpc3 <- read.table("Output/OptimOut0_run/fpc_OptimRun_Irr.txt", header=T) %>%
   mutate(Treatment="Irrigation")
 
 fpc <- rbind.data.frame(fpc1,fpc3) %>%
@@ -162,20 +181,3 @@ ggplot(data=npp3, aes(x=Year, y=ANPP, color=Species)) +
   ylab(expression(ANPP~(g~m^{-2}))) +
   facet_wrap(~Treatment)
 
-
-# Read in model output (monthly) ------------------------------------
-# Pull in monthly data from orig1
-orig1 <- NULL 
-vars=c("mgpp","mrh","mra","mnee","mevap","maet","mlai","mwcont_upper")
-for(var in vars) {
-  data=paste("/orig1_",var,".out", sep="")
-  b <- fread(data, header=T)
-  b1 <- b %>% mutate(Year=Year+860) %>% 
-    filter(Year>=1991) %>%
-    gather(Month,orig1, Jan:Dec) %>%
-    mutate(Variable=var) %>%
-    select(Year, Month,Variable,orig1)
-  orig1 <- rbind.data.frame(orig1,b1)
-}
-orig1$D <- as.yearmon(paste(orig1$Year, orig1$Month), "%Y %b")
-orig1$Date <- as.Date(orig1$D)
