@@ -44,13 +44,13 @@ title "LPJ-GUESS (guess2008) cohort mode"
 vegmode "cohort"
 nyear 1153 !1153 to run through 2012
 ifdailynpp 1
-ifdailydecomp 1 !KE 8.19.14 changed to daily 1 from monthly 0
+ifdailydecomp 1 
 ifcalcsla 0
 iffire 1 !fire on 0 fire off 1
 ifdisturb 0 ! DO NOT TURN ON! Kills outright, bad effect on output.
 npatch 100
 patcharea 1
-estinterval 5
+estinterval 1
 distinterval 3
 ifhistdisturb 0		
 ifbgestab 0
@@ -60,7 +60,7 @@ ifstochmort 0
 ifcdebt 0
 ifmanaged 0         ! whether to allow  land management masking (1) or not (0) 
 ifsmoothgreffmort 0
-ifdroughtlimitedestab 0 !KE turned off (0)
+ifdroughtlimitedestab 1 !KE turned off (0)
 ifrainonwetdaysonly 1
 ifspeciesspecificwateruptake 1
 instype "NETSWRAD"
@@ -133,11 +133,12 @@ group "grass" (
 	intc 0.01 !interception coefficient (unitless)- no basis for modification
 	downramp 1 ! default, equivalent to not using parameter
 	phengdd5ramp 100 
-	respcoeff 0.15 !maintenance respiration coefficient (0-1) 
+	respcoeff 0.15 !maintenance respiration coefficient (0-1). c3 is 1
 		
 	! The following parameter values are modified for both species:
 	fireresist 0.001
 	litterme 0.99 !litter moisture flammability threshold (fraction of AWC)
+	aphenmax 365
 
 )
 
@@ -149,17 +150,17 @@ pft "ANGE" (
 	grass
 
 	! PFT-specific (from data)--------------------
-	rootdist 0.93 0.07
-	sla 19.62
+	rootdist 0.93 0.07 !.86 .14 was better
+	sla 15.7
 	turnover_root 0.5
 	reprfrac .107 !fraction of NPP allocated to reproduction
 	
 	!PFT-specific (to be optimized)-----------------
-	drought_tolerance 0.664755947905313
-	aphenmax 198.571906556439
-	ltor_max 0.522470683781023
-	wscal_min 0.514790520419205 
-	parff_min 236433.584201802
+	drought_tolerance 0.0586677422251276
+	aphenmax 211.394289503106
+	ltor_max 0.571052918851217
+	wscal_min 0.285251118903899 
+	parff_min 8797362.00006213
 
 	
 )
@@ -172,15 +173,15 @@ pft "PAVI" (
 	grass
 	
 	!PFT-specific (from data)----------
-	rootdist 0.99 0.01 
+	rootdist 1 0 ! rooting depth is .305
 	sla 22.9
 	turnover_root 0.31
 	reprfrac .286 !fraction of NPP allocated to reproduction. orig value = .1
 	
 	!PFT-specific (to be optimized)-------------
-	drought_tolerance 0.650082530438338
-	aphenmax 178.570213809031
-	ltor_max 0.800801660906983
-	wscal_min 0.468159755621724
-	parff_min 1477266.95779478
+	drought_tolerance 0.742438747336962
+	aphenmax 210.806332110315
+	ltor_max 0.97970323471532
+	wscal_min 0.598628215897526
+	parff_min 75536.1565804845
 )
