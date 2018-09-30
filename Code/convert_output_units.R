@@ -19,7 +19,7 @@ npp_annual <- rbind.data.frame(npp1,npp2) %>%
   mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
   mutate_at(vars(ANGE:Total), funs(.*0.4761905))
 
-write.csv(npp_annual, "../../RequestedOutput/NewSla/npp_annual.csv", row.names=F)
+write.csv(npp_annual, "../../RequestedOutput/NewSla/npp_annual_gm-2.csv", row.names=F)
 
 # Read in model output (monthly) ------------------------------------
 # Pull in monthly data from orig1
