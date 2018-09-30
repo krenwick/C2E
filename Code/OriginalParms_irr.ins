@@ -23,32 +23,29 @@
     param "file_silt" (str "/Users/poulterlab1/Documents/LPJGUESS/drivers_1km/gcs84_conus_SILT.nc")
 	
 !///////////////////////////////////////////////////                      
-!         
-outputdirectory "Output/orig3_"
+!               
+outputdirectory "Output/"
 !                      
-file_cmass "cmass.out"
-file_anpp "anpp.out"
-file_lai "lai.out"  
-file_cflux "cflux.out"
-file_runoff "tot_runoff.out"
-file_cpool "cpool.out"
-file_firert "firert.out"
-file_fpc "fpc.out"
+file_cmass "cmass_OrigRun_Irr.txt"
+file_anpp "anpp_OrigRun_Irr.txt"
+file_cflux "cflux_OrigRun_Irr.txt"
+file_cpool "cpool_OrigRun_Irr.txt"
+file_fpc "fpc_OrigRun_Irr.txt"
 !                      
-! Monthly outputs                     
-file_mnpp "mnpp.out"
-file_mlai "mlai.out"
-file_mrh "mrh.out"
-file_mgpp "mgpp.out"
-file_mra "mra.out"
-file_mnee "mnee.out"
-file_maet "maet.out"
-file_mpet "mpet.out"
-file_mevap "mevap.out"
-file_mintercep "mintercep.out"
-file_mrunoff "mrunoff.out"
-file_mwcont_upper "mwcont_upper.out"
-file_mwcont_lower "mwcont_lower.out"
+! Monthly outputs    
+file_mnpp "mnpp_OrigRun_Irr.txt"
+file_mlai "mlai_OrigRun_Irr.txt"
+file_mrh "mrh_OrigRun_Irr.txt"
+file_mgpp "mgpp_OrigRun_Irr.txt"
+file_mra "mra_OrigRun_Irr.txt"
+file_mnee "mnee_OrigRun_Irr.txt"
+file_maet "maet_OrigRun_Irr.txt"
+file_mpet "mpet_OrigRun_Irr.txt"
+file_mevap "mevap_OrigRun_Irr.txt"
+file_mintercep "mintercep_OrigRun_Irr.txt"
+file_mrunoff "mrunoff_OrigRun_Irr.txt"
+file_mwcont_upper "mwcont_upper_OrigRun_Irr.txt"
+file_mwcont_lower "mwcont_lower_OrigRun_Irr.txt"   
 
 ! Annual output
 	param "file_cohort_annual" (str "./cohort_annual.nc")
@@ -71,13 +68,13 @@ title "LPJ-GUESS (guess2008) cohort mode"
 vegmode "cohort"
 nyear 1153 !1153 to run through 2012
 ifdailynpp 1
-ifdailydecomp 1 !KE 8.19.14 changed to daily 1 from monthly 0
+ifdailydecomp 1 
 ifcalcsla 0
 iffire 1 !fire on 0 fire off 1
 ifdisturb 0 ! DO NOT TURN ON! Kills outright, bad effect on output.
 npatch 100
 patcharea 1
-estinterval 5
+estinterval 1
 distinterval 3
 ifhistdisturb 0		
 ifbgestab 0
@@ -87,7 +84,7 @@ ifstochmort 0
 ifcdebt 0
 ifmanaged 0         ! whether to allow  land management masking (1) or not (0) 
 ifsmoothgreffmort 0
-ifdroughtlimitedestab 0 !KE turned off (0)
+ifdroughtlimitedestab 1 !KE turned off (0)
 ifrainonwetdaysonly 1
 ifspeciesspecificwateruptake 1
 instype "NETSWRAD"
@@ -109,8 +106,8 @@ saoutputyr 	0	! simulation year that variables begin to be output for stand annu
 pftaoutputyr 0		! simulation year that variables begin to be output for PFT annual
 cohortaoutputyr 0	! simulation year that variables begin to be output for cohort annual
 					! recommend setting to last simulation year (nyear-1)
-moutputyr 0		! simulation year that variables begin to be output for monthly 
-doutputyr 0      ! simulation year that variables begin to be output for daily 
+moutputyr 1150		! simulation year that variables begin to be output for monthly 
+doutputyr 1150       ! simulation year that variables begin to be output for daily 
 
 ifannualout 0		! whether annual output (1=yes)
 ifmonthlyout 1		! whether monthly output (1=yes)
@@ -160,11 +157,12 @@ group "grass" (
 	intc 0.01 !interception coefficient (unitless)- no basis for modification
 	downramp 1 ! default, equivalent to not using parameter
 	phengdd5ramp 100 
-	respcoeff 0.15 !maintenance respiration coefficient (0-1) 
+	respcoeff 0.15 !maintenance respiration coefficient (0-1). c3 is 1
 		
 	! The following parameter values are modified for both species:
 	fireresist 0.001
 	litterme 0.99 !litter moisture flammability threshold (fraction of AWC)
+	aphenmax 365
 
 )
 
@@ -176,19 +174,16 @@ pft "ANGE" (
 	grass
 
 	! PFT-specific (from data)--------------------
-	rootdist 0.93 0.07
-	sla 19.62
+	rootdist 0.93 0.07 !.86 .14 was better
+	sla 15.7
 	turnover_root 0.5
 	reprfrac .107 !fraction of NPP allocated to reproduction
+	ltor_max .5
 	
 	!PFT-specific (to be optimized)-----------------
-	drought_tolerance .0001 !0.0001
-	aphenmax 210 !365 
-	ltor_max .5
-	wscal_min .35 !.5 !.35 !0.35 !35 standard, ANGE better
+	drought_tolerance 0.0001
+	wscal_min .35 !35 standard, ANGE better
 	parff_min 1000000
-
-	
 )
 
 pft "PAVI" (
@@ -199,15 +194,15 @@ pft "PAVI" (
 	grass
 	
 	!PFT-specific (from data)----------
-	rootdist 0.99 0.01 
+	rootdist 1 0 ! rooting depth is .305
 	sla 22.9
 	turnover_root 0.31
 	reprfrac .286 !fraction of NPP allocated to reproduction. orig value = .1
+	ltor_max .5 !1.4 !.5
 	
 	!PFT-specific (to be optimized)-------------
-	drought_tolerance .0001 !0.0001 ! should always be <=.5, per internal note
-	aphenmax 210 !365
-	ltor_max .5
-	wscal_min .35 !.6 !.35 !0.35 !35 standard, PAVI worse. only matters if raingreen pheno	
+	drought_tolerance 0.0001! should always be <=.5, per internal note (.7 works well)
+	wscal_min .35 !35 standard, PAVI worse. only matters if raingreen pheno
+	! used once, in pheno routine	
 	parff_min 1000000
 )
