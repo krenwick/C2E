@@ -194,9 +194,9 @@ ggplot(data=sm3, aes(x=Date, y=Value, color=Source)) +
   geom_line(aes(group = g)) +
   scale_x_date(date_breaks = "6 months",date_labels = "%Y-%b")
 
-################################################################################
-# Is there something weird going on with my precip data?
-################################################################################
+#####################################################
+# Plot ambiet and model as a function of precip
+#####################################################
 amb <- read.table("../Data/ppt.txt", header=F)
 irr <- read.table("../Data/ppt_irr.txt")
 head(amb)
@@ -209,27 +209,60 @@ irr2 <- irr %>% mutate(yr=seq(1:nrow(irr))) %>%
   mutate(Year=yr+859) %>%
   gather(Month,Irrigated,`1`:`12`)
 ppt <- merge(amb2,irr2,by=c("Lat","Lon","Year","Month")) %>%
-  filter(Year>2005)
-ppt$D <- as.yearmon(paste(ppt$Year, ppt$Month), "%Y %m")
-ppt$Date <- as.Date(ppt$D)
-ggplot(data=ppt, aes(x=Date,y=Ambient)) +
-  #geom_point() +
-  geom_line(color="red") +
-  geom_line(aes(x=Date,y=Irrigated), color="blue")
+  filter(Year>1990) %>%
+  mutate(Month=as.numeric(Month)) %>%
+  #filter(Month>3 & Month<10) %>%
+  group_by(Year) %>%
+  summarise_at(vars(Ambient,Irrigated), sum) %>%
+  rename(control=Ambient,irrigated=Irrigated) %>%
+  gather(Treatment, Precipitation, control:irrigated)
 
-#####################################################
-# Plot temperature
-#####################################################
-temp <- read.table("../Data/temp.txt", header=F)
-names(temp) <- c("Lat","Lon","Year",seq_along(month.abb))
-temp2 <- temp %>% mutate(yr=seq(1:nrow(temp))) %>%
-  mutate(Year=yr+859) %>%
-  gather(Month,Ambient,`1`:`12`) %>%
-  filter(Year>1990)
+ppt2 <- merge(ppt,npp1, by=c("Year","Treatment")) %>%
+  filter(Treatment=="control")
+ppteffect <- ggplot(data=ppt2, aes(x=Precipitation, y=NPP, color=Source, fill=Source)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  ylab(expression(ANPP~(g~m^{-2}))) +
+  xlab("Total Annual Precip (ambient)") +
+  theme(legend.position=c(.01,.99), legend.justification=c(0,1))
+ppteffect
 
-temp2$D <- as.yearmon(paste(temp2$Year, temp2$Month), "%Y %m")
-temp2$Date <- as.Date(temp2$D)
-ggplot(data=temp2, aes(x=Date,y=Ambient)) +
-  geom_line() 
+################################################################################
+# Is there something weird going on with my precip data?
+################################################################################
+# amb <- read.table("../Data/ppt.txt", header=F)
+# irr <- read.table("../Data/ppt_irr.txt")
+# head(amb)
+# names(amb) <- c("Lat","Lon","Year",seq_along(month.abb))
+# amb2 <- amb %>% mutate(yr=seq(1:nrow(amb))) %>%
+#   mutate(Year=yr+859) %>%
+#   gather(Month,Ambient,`1`:`12`)
+# names(irr) <- c("Lat","Lon","Year",seq_along(month.abb))
+# irr2 <- irr %>% mutate(yr=seq(1:nrow(irr))) %>%
+#   mutate(Year=yr+859) %>%
+#   gather(Month,Irrigated,`1`:`12`)
+# ppt <- merge(amb2,irr2,by=c("Lat","Lon","Year","Month")) %>%
+#   filter(Year>2005)
+# ppt$D <- as.yearmon(paste(ppt$Year, ppt$Month), "%Y %m")
+# ppt$Date <- as.Date(ppt$D)
+# ggplot(data=ppt, aes(x=Date,y=Ambient)) +
+#   #geom_point() +
+#   geom_line(color="red") +
+#   geom_line(aes(x=Date,y=Irrigated), color="blue")
+# 
+# #####################################################
+# # Plot temperature
+# #####################################################
+# temp <- read.table("../Data/temp.txt", header=F)
+# names(temp) <- c("Lat","Lon","Year",seq_along(month.abb))
+# temp2 <- temp %>% mutate(yr=seq(1:nrow(temp))) %>%
+#   mutate(Year=yr+859) %>%
+#   gather(Month,Ambient,`1`:`12`) %>%
+#   filter(Year>1990)
+# 
+# temp2$D <- as.yearmon(paste(temp2$Year, temp2$Month), "%Y %m")
+# temp2$Date <- as.Date(temp2$D)
+# ggplot(data=temp2, aes(x=Date,y=Ambient)) +
+#   geom_line() 
 # nothing strange happened in 1998 to explain FPC spike
   
