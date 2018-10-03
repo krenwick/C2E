@@ -1,6 +1,7 @@
 ################################################################################
 # Examine output from model runs with species-specific parameters
-# NOTE: make sure correct model is compiled!
+# NOTE: make sure model is the C2E version!
+# CHANGE FILE PATH lines 22 and 29 if on a different computer
 ################################################################################
 rm(list=ls())
 library(tidyverse); theme_set(theme_bw(base_size=10))

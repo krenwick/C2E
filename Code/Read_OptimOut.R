@@ -1,7 +1,7 @@
 ################################################################################
 # Examine output from hyalite optimization runs
-# NOTE: make sure model on git is MASTER and compiled with old phenology!
-# New phenology model is in LPJfiles
+# NOTE: make sure model is the C2E version!
+# CHANGE FILE PATH lines 51 and 67 if on a different computer
 ################################################################################
 rm(list=ls())
 library(DEoptim)
@@ -15,7 +15,7 @@ library(gridExtra)
 setwd("~/Documents/C2E/")
 outname1 <- "OptimRun"
 outname2 <- "OptimRun_Irr"
-object1 <- "OptimOut.RData"
+object1 <- "OptimOut1.RData" #OptimOut1 is optimized with just NPP
 
 #-------------------------------------------------------------------------------
 # Get object from DEparoptim_summergreen1:
@@ -127,7 +127,6 @@ r %>% mutate(diff=abs(Field-Model)) %>%
 #OptimOut0: 76/192, .16/.09, uses cover, orig SLA: 84/190, .10/.06
 #OptimOut: 87/203, .03/.36 uses cover, orig SLA: 98/225, -.05/.03
 #OptimOut1: 65/147, .32/.19, just NPP, original SLA: 70/159, .30/.20
-#OptimOut2:
 ################################################################################
 # Plot annual FPC by species
 ################################################################################
