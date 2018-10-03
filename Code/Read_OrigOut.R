@@ -1,10 +1,8 @@
 ################################################################################
-# Examine output from hyalite optimization runs
-# NOTE: make sure model on git is MASTER and compiled with old phenology!
-# New phenology model is in LPJfiles
+# Examine output from model runs with species-specific parameters
+# NOTE: make sure correct model is compiled!
 ################################################################################
 rm(list=ls())
-library(DEoptim)
 library(tidyverse); theme_set(theme_bw(base_size=10))
 library(data.table)
 library(zoo)
@@ -13,58 +11,21 @@ library(gridExtra)
 
 # SET WORKING DIRECTORY:
 setwd("~/Documents/C2E/")
-outname1 <- "OptimRun"
-outname2 <- "OptimRun_Irr"
-object1 <- "OptimOut.RData"
+outname1 <- "OrigRun"
+outname2 <- "OrigRun_Irr"
 
 #-------------------------------------------------------------------------------
-# Get object from DEparoptim_summergreen1:
 
-load(object1)
-summary(DE1)
-DE1$optim
-LPJG
-ins
-########################
-# Make new ins file with these parameter values:
-insfile <- "Code/OptimDummy.ins" # name of ins file to use
-# gsub: replaces all occurences of a pattern
-ins  <- readLines(insfile)
-tx  <- gsub(pattern = "drought_tolval1", replace = DE1$optim$bestmem[1], x = ins)
-tx  <- gsub(pattern = "drought_tolval2", replace = DE1$optim$bestmem[2], x = tx)
-tx  <- gsub(pattern = "aphenmaxval1", replace = DE1$optim$bestmem[3], x = tx)
-tx  <- gsub(pattern = "aphenmaxval2", replace = DE1$optim$bestmem[4], x = tx)
-tx  <- gsub(pattern = "ltormaxval1", replace = DE1$optim$bestmem[5], x = tx)
-tx  <- gsub(pattern = "ltormaxval2", replace = DE1$optim$bestmem[6], x = tx)
-tx  <- gsub(pattern = "wscalminval1", replace = DE1$optim$bestmem[7], x = tx)
-tx  <- gsub(pattern = "wscalminval2", replace = DE1$optim$bestmem[8], x = tx)
-tx  <- gsub(pattern = "parff_minval1", replace = DE1$optim$bestmem[9], x = tx)
-tx  <- gsub(pattern = "parff_minval2", replace = DE1$optim$bestmem[10], x = tx)
-tx  <- gsub(pattern = "npatch 10", replace = "npatch 100", x = tx)
-insname <- "OptimParms"
-tx  <- gsub(pattern = "randomval", replace = outname1, x = tx)
-tx  <- gsub(pattern = "\\./", replace = "Output/", x = tx)
-writeLines(tx, con=paste("Code/",insname,".ins", sep=""))
-
-# Run model with new ins then compare output to flux data:
+# Run model with new ambient conditions:
 # CHECK: is correct model compiled???
-system("/Users/poulterlab1/version-control/LPJ-GUESS/ModelFiles/modules/./guess /Users/poulterlab1/Documents/C2E/Code/OptimParms.ins")
+system("/Users/poulterlab1/version-control/LPJ-GUESS/ModelFiles/modules/./guess /Users/poulterlab1/Documents/C2E/Code/OriginalParms.ins")
 
 ################################################################################
 # Re-run model using irrigation driver data
-# Make new ins file with these parameter values:
-insfile2 <- "Code/OptimParms.ins" # name of ins file to use
-# gsub: replaces all occurences of a pattern
-ins  <- readLines(insfile2)
-insname <- "OptimParms_Irr"
-tx  <- gsub(pattern = "ppt.txt", replace = "ppt_irr.txt", x = tx)
-tx  <- gsub(pattern = "wetd.txt", replace = "wetd_irr.txt", x = tx)
-tx  <- gsub(pattern = outname1, replace = outname2, x = tx)
-writeLines(tx, con=paste("Code/",insname,".ins", sep=""))
 
 # Run model with new ins then compare output to flux data:
 # CHECK: is correct model compiled???
-system("/Users/poulterlab1/version-control/LPJ-GUESS/ModelFiles/modules/./guess /Users/poulterlab1/Documents/C2E/Code/OptimParms_Irr.ins")
+system("/Users/poulterlab1/version-control/LPJ-GUESS/ModelFiles/modules/./guess /Users/poulterlab1/Documents/C2E/Code/OriginalParms_Irr.ins")
 
 ################################################################################
 # PLOT TIME!
@@ -73,7 +34,7 @@ system("/Users/poulterlab1/version-control/LPJ-GUESS/ModelFiles/modules/./guess 
 k <- read.csv("Data/RefData/anpp_1991_2012.csv")
 
 # Model output: ambient
-npp <- read.table("Output/anpp_OptimRun.txt", header=T) %>%
+npp <- read.table("Output/anpp_OrigRun.txt", header=T) %>%
   mutate(Source="Model", Treatment="control") %>%
   mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
   mutate(year=Year+860) %>%
@@ -83,7 +44,7 @@ npp <- read.table("Output/anpp_OptimRun.txt", header=T) %>%
   rename(NPP=Total)
 
 # Model output: irrigation
-npp2 <- read.table("Output/anpp_OptimRun_Irr.txt", header=T) %>%
+npp2 <- read.table("Output/anpp_OrigRun_Irr.txt", header=T) %>%
   mutate(Source="Model", Treatment="irrigated") %>%
   mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
   mutate(year=Year+860) %>%
@@ -115,25 +76,23 @@ ggplot(data=field, aes(x=Year, y=NPP)) +
 r <- spread(npp1, Source, NPP) 
 rc<- filter(r, Treatment=="control")
 ri<- filter(r, Treatment=="irrigated")
-summary(lm(data=rc, Field~Model)) # .03, not significant
-summary(lm(data=ri, Field~Model)) # .36
+summary(lm(data=rc, Field~Model)) # -0.03, not significant
+summary(lm(data=ri, Field~Model)) # .098 with standard values
 
 # What is the mean abosolute error?
 r %>% mutate(diff=abs(Field-Model)) %>%
   group_by(Treatment) %>%
   summarize(mean(diff))
-#contro: 87
-#irrigated: 203
-#OptimOut0: 76/192, .16/.09, uses cover, orig SLA: 84/190, .10/.06
-#OptimOut: 87/203, .03/.36 uses cover, orig SLA: 98/225, -.05/.03
-#OptimOut1: 65/147, .32/.19, just NPP, original SLA: 70/159, .30/.20
-#OptimOut2:
+# control: 82
+# irrigated: 204
+# all standard parms, drought tol .0001: 82/203, .00/.10
+# standard but old (19.6) SLA: 87/220, .02/.21
 ################################################################################
 # Plot annual FPC by species
 ################################################################################
-fpc1 <- read.table("Output/fpc_OptimRun.txt", header=T) %>%
+fpc1 <- read.table("Output/fpc_OrigRun.txt", header=T) %>%
   mutate(Treatment="Ambient")
-fpc3 <- read.table("Output/fpc_OptimRun_Irr.txt", header=T) %>%
+fpc3 <- read.table("Output/fpc_OrigRun_Irr.txt", header=T) %>%
   mutate(Treatment="Irrigation")
 
 fpc <- rbind.data.frame(fpc1,fpc3) %>%
@@ -148,10 +107,20 @@ ggplot(data=fpc, aes(x=Year,y=FPC, color=Species)) +
   facet_wrap(~Treatment)
 
 ################################################################################
+# Make some diagnostic plots
+################################################################################
+# Plot ambient vs. irrigation
+m1 <- spread(mod, Treatment, NPP)
+ggplot(data=m1, aes(x=control, y=irrigated)) +
+  geom_point() +
+  geom_abline(slope=1,intercept=0) +
+  coord_fixed(xlim=c(200,800), ylim=c(200,800))
+
+################################################################################
 # Plot annual NPP by species- same pattern as FPC?
 ################################################################################
 # Model output: ambient
-npp <- read.table("Output/anpp_OptimRun.txt", header=T) %>%
+npp <- read.table("Output/anpp_OrigRun.txt", header=T) %>%
   mutate(Source="Model", Treatment="control") %>%
   mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
   mutate(Year=Year+860) %>%
@@ -161,7 +130,7 @@ npp <- read.table("Output/anpp_OptimRun.txt", header=T) %>%
   gather(Species, ANPP, ANGE:PAVI)
 
 # Model output: irrigation
-npp2 <- read.table("Output/anpp_OptimRun_Irr.txt", header=T) %>%
+npp2 <- read.table("Output/anpp_OrigRun_Irr.txt", header=T) %>%
   mutate(Source="Model", Treatment="irrigated") %>%
   mutate_at(vars(ANGE:Total), funs(.*2000)) %>%
   mutate(Year=Year+860) %>%
